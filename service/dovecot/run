@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -e
+
+cat <<EOF > /etc/dovecot/conf.d/99-postgres-auth.conf
+service auth {
+  # Postfix smtp-auth
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0666
+  }
+}
+EOF
+
+cat <<EOF > /etc/dovecot/conf.d/pgsql.conf
+auth_mechanisms = plain
+passdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf
+}
+userdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf
+}
+service auth {
+    unix_listener /var/spool/postfix/private/auth {
+        group = postfix
+        mode = 0660
+        user = postfix
+    }
+    user = root
+}
+mail_home = $VIRTUAL_MAILBOX_BASE/%d/%u
+mail_location = maildir:~
+ssl_cert = <$SMTPD_TLS_CERT_FILE
+ssl_key = <$SMTPD_TLS_KEY_FILE
+EOF
+
+cat <<EOF > /etc/dovecot/dovecot-sql.conf
+driver = pgsql
+connect = host=${PGHOST} dbname=${PGDATABASE} user=${PGUSER} password=${PGPASS}
+default_pass_scheme = MD5-CRYPT
+user_query = SELECT '${VIRTUAL_MAILBOX_BASE}/%d/%u' as home, 'maildir:${VIRTUAL_MAILBOX_BASE}/%d/%u' as mail, 5000 AS uid, 5000 AS gid, concat('dirsize:storage=',  quota) AS quota FROM mailbox WHERE username = '%u' AND active = '1'
+password_query = SELECT username as user, password, '${VIRTUAL_MAILBOX_BASE}%d/%u' as userdb_home, 'maildir:${VIRTUAL_MAILBOX_BASE}/%d/%u' as userdb_mail, 5000 as  userdb_uid, 5000 as userdb_gid FROM mailbox WHERE username = '%u' AND active = '1'
+EOF
+
+# Run Dovecot as a background process
+dovecot -F

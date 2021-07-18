@@ -1,11 +1,26 @@
 ###############################################################################
 # Basic Postfix settings
-#
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# !!!! ADJUST THE SETTINGS TO YOUR NEEDS !!!!
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#
 ###############################################################################
+
+
+# COMPATIBILITY
+#
+# The compatibility_level determines what default settings Postfix
+# will use for main.cf and master.cf settings. These defaults will
+# change over time.
+#
+# To avoid breaking things, Postfix will use backwards-compatible
+# default settings and log where it uses those old backwards-compatible
+# default settings, until the system administrator has determined
+# if any backwards-compatible default settings need to be made
+# permanent in main.cf or master.cf.
+#
+# When this review is complete, update the compatibility_level setting
+# below as recommended in the RELEASE_NOTES file.
+#
+# The level below is what should be used with new (not upgrade) installs.
+#
+compatibility_level = 3.6
 
 # Whether or not to use the local biff service. This service sends "new mail"
 # notifications to users who have requested new mail notification with the
@@ -15,18 +30,19 @@ biff = no
 # Appending .domain is the MUA's job. Default: Postfix >= 3.0: no
 append_dot_mydomain = no
 
-# The internet domain name of this mail system. 
-mydomain = domain.tld
+# Created from ENV and substituted to /etc/postfix/env.cf
+# mydomain = domain.tld
 
 # The domain name that locally-posted mail appears to
 # come from, and that locally posted mail is delivered to. The default,
 # $myhostname, is adequate for small sites. (default: $myhostname)
-myorigin = domain.tld
+# Created from ENV and substituted to /etc/postfix/env.cf
+# myorigin = domain.tld
 
 # "myhostname" should resolve to the IP of your mailserver. In general that's
 # the Kubernetes worker node the Postfix container runs on.
-# @ID@ is replaced during container startup (see: service/postfix/run_multi)
-myhostname = mail@ID@.$mydomain
+# Created from ENV and substituted to /etc/postfix/env.cf
+# myhostname = mail.$mydomain
 
 # The list of domains that are delivered via the $local_transport
 # mail delivery transport. By default this is the Postfix local(8) delivery
@@ -53,19 +69,8 @@ mynetworks = 127.0.0.1/32 10.3.0.0/24
 
 # You MUST specify $myhostname at the start of the text. This is required
 # by the SMTP protocol. (default: $myhostname ESMTP $mail_name)
-smtpd_banner = $myhostname ESMTP $mail_name (Commodore Amiga)
+smtpd_banner = $myhostname ESMTP $mail_name
 
-# The alias databases that are used for local(8) delivery. See aliases(5)
-# for syntax details. Adjust the file "etc/mail/aliases" which is 
-# included in my "kubernetes-postfix" Git repository accordingly.
-# Same is true for "$alias_database" (see next parameter).
-alias_maps = hash:/etc/mail/aliases
-# The alias databases for local(8) delivery that are updated with "newaliases".
-# This is a separate configuration parameter because not all the tables
-# specified with "$alias_maps" have to be local files.
-# The script "service/postfix/run" which basically starts Postfix in the pod
-# run's "newaliases" command during startup.
-alias_database = hash:/etc/mail/aliases
 
 # The  maximal  size  of any local(8) individual mailbox or maildir file,
 # or zero (no limit).
@@ -74,7 +79,6 @@ mailbox_size_limit = 0
 # Note: be careful when making changes. Excessively small values will result
 # in the loss of non-delivery notifications, when a bounce message size
 # exceeds the local or remote MTA's message size limit.
-message_size_limit = 20480000
 
 # Avoid warning: smtputf8_enable is true, but EAI support is not compiled in
 smtputf8_enable = no
@@ -86,6 +90,8 @@ smtputf8_enable = no
 strict_mailbox_ownership = no
 
 
+relay_domains = $mydestination, proxy:pgsql:/etc/postfix/pgsql-relay_domains.cf
+
 ###############################################################################
 # Virtual mailbox handling
 ###############################################################################
@@ -94,27 +100,17 @@ strict_mailbox_ownership = no
 # specify all domains here which this Postfix should handle separated by spaces.
 # Of course the DNS MX record of all the domains have to point to this mail
 # server.
-virtual_mailbox_domains = domain.tld anotherdomain.tld
+virtual_mailbox_domains = proxy:pgsql:/etc/postfix/pgsql-virtual_domains_maps.cf
 
-# The default mail delivery transport and next-hop destination for final
-# delivery to domains listed with "$virtual_mailbox_domains". This information
-# can be overruled with the transport(5) table.
-# I use Archiveopteryx IMAP server. It listens on port 2026 (LMTP protocol) on one
-# of my PeerVPN addresses. As Postfix pod runs as a DaemonSet it has access to the
-# PeerVPN network and can connect to the LMTP port of Archiveopteryx to 
-# finally deliver the mail addressed to one of the user of the virtual domains.
-# Replace www.xxx.yyy.zzz with the IP address of your LMTP server of course!
-virtual_transport = lmtp:inet:www.xxx.yyy.zzz:2026
-
-# Virtual user map. The script "service/postfix/run" will create a hash map
-# of the virual users you specified here. See file "etc/postfix/vmailbox" as
-# an example and for more information. Basically you specify all users here
-# for which you want to receive mails line by line.
-virtual_mailbox_maps = hash:/etc/postfix/vmailbox
+virtual_mailbox_maps = proxy:pgsql:/etc/postfix/pgsql-virtual_mailbox_maps.cf
 
 # Optional lookup tables that alias specific mail addresses or domains to
 # other local or remote address.
-virtual_alias_maps = hash:/etc/postfix/virtual
+virtual_alias_maps = proxy:pgsql:/etc/postfix/pgsql-virtual_alias_maps.cf
+
+local_recipient_maps = $virtual_mailbox_maps
+local_transport = virtual
+virtual_transport = virtual
 
 
 ###############################################################################
@@ -125,26 +121,28 @@ virtual_alias_maps = hash:/etc/postfix/virtual
 # headers that are processed with mime_header_checks). Possible use case
 # could be to block all mails that contain "Viagra" in the header e.g.
 # See "etc/postfix/headercheck" for examples.
-header_checks = regexp:/etc/postfix/headercheck
+# header_checks = regexp:/etc/postfix/headercheck
 
 # These  are  applied  to  all other content, including multi-part
 # message boundaries. Basically as above but for the mail body.
 # See "etc/postfix/bodycheck" for examples.
-body_checks = regexp:/etc/postfix/bodycheck
+# body_checks = regexp:/etc/postfix/bodycheck
 
 
 ###############################################################################
-# Incoming TLS
+# TLS
 ###############################################################################
 
-# Let's Encrypt certificate file
-smtpd_tls_cert_file = /etc/postfix/certs/tls.crt
-# Let's Encrypt key file
-smtpd_tls_key_file  = /etc/postfix/certs/tls.key
+# Includes certificate files: dynamically
 # Sender MAY use TLS but we also accept unencrypted connections.
 smtpd_tls_security_level = may
-smtpd_tls_loglevel = 1
-smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtpd_tls_loglevel = 3
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_timeout = 3600s
+smtpd_tls_session_cache_database = lmdb:${data_directory}/smtpd_scache
+tls_random_source = dev:/dev/urandom
+# This one is maintained by Alpine Linux but you can add your own if you want.
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 
 # Better forward secrecy settings. With prime-field EDH, OpenSSL wants the
 # server to provide two explicitly-selected (prime, generator) combinations.
@@ -152,21 +150,7 @@ smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
 # non-export cipher suites. Postfix has two such default combinations
 # compiled in, but also supports explicitly-configured overrides.  
 # See: http://www.postfix.org/FORWARD_SECRECY_README.html
-smtpd_tls_dh1024_param_file = ${config_directory}/dh2048.pem
-smtpd_tls_dh512_param_file = ${config_directory}/dh512.pem
-
-
-###############################################################################
-# Outgoing TLS
-###############################################################################
-
-# Postfix MAY use TLS encryption if destination supports it.
-smtp_tls_security_level = may
-smtp_tls_loglevel = 1
-smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
-# A long list of all of trusted certificate authorities concatenated together.
-# This one is maintained by Alpine Linux but you can add your own if you want.
-smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+# Includes dhparams files: dynamically
 
 
 ###############################################################################
@@ -195,3 +179,15 @@ smtpd_recipient_restrictions =
 	reject_rhsbl_sender bogusmx.rfc-ignorant.org,
 	reject_unauth_destination,
 	permit
+
+
+
+###############################################################################
+# SASL Auth for SMTP relaying
+###############################################################################
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_authenticated_header = yes
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes

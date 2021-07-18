@@ -71,8 +71,8 @@ spec:
           mountPath: /etc/postfix/headercheck
           readOnly: true
         - name: config
-          subPath: main.cf
-          mountPath: /etc/postfix/main.cf
+          subPath: main.cf.tmpl
+          mountPath: /etc/postfix/main.cf.tmpl
           readOnly: true
         - name: config
           subPath: vmailbox

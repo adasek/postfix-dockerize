@@ -1,0 +1,67 @@
+version: "3.7"
+services:
+  postgresql:
+    container_name: postgresql
+    image: postgres:latest
+    restart: always
+    environment:
+     - POSTGRES_DB=mail
+     - POSTGRES_USER=mail
+     - POSTGRES_PASSWORD=somePassword
+    volumes:
+      - mail-postgres-db:/var/lib/mysql
+    ports:
+      # postgres
+      - "9001:5432"
+  postfix:
+    container_name: postfix
+    image: "postfix:0.0.1"
+    restart: always
+    depends_on:
+      - postgresql
+    environment:
+      - MYDOMAIN=m42.cz
+      - MYORIGIN=m42.cz
+      - MYHOSTNAME=geodude.m42.cz
+      - PGHOST=postgresql
+      - PGPORT=5432
+      - PGUSER=mail
+      - PGPASS=somePassword
+      - PGDATABASE=mail
+      - SMTPD_TLS_CERT_FILE=/tmp/cert.pem
+      - SMTPD_TLS_KEY_FILE=/tmp/key.pem
+      - SMTPD_TLS_DH1024_PARAM_FILE=/tmp/dh2048.pem
+      - SMTPD_TLS_DH512_PARAM_FILE=/tmp/dh512.pem
+      - MESSAGE_SIZE_LIMIT=20480000
+      - VIRTUAL_MAILBOX_BASE=/var/mailstorage
+    volumes:
+      - mail-storage:/var/mailstorage
+      - /etc/dhparam/dh2048.pem:/tmp/dh2048.pem
+      - /etc/dhparam/dh512.pem:/tmp/dh512.pem
+      - /etc/letsencrypt/live/geodude.m42.cz/privkey.pem:/tmp/key.pem
+      - /etc/letsencrypt/live/geodude.m42.cz/fullchain.pem:/tmp/cert.pem
+    ports:
+      # smtp
+      - "25:25"
+      # clients connecting SSL
+      - "465:465"
+      # submission port
+      - "587:587"
+  postfixadmin:
+    container_name: postfixadmin
+    image: "postfixadmin:latest"
+    restart: always
+    depends_on:
+      - postgresql
+    environment:
+      - POSTFIXADMIN_DB_TYPE=pgsql
+      - POSTFIXADMIN_DB_HOST=postgresql
+      - POSTFIXADMIN_DB_USER=mail
+      - POSTFIXADMIN_DB_PASSWORD=somePassword
+      - POSTFIXADMIN_DB_NAME=mail
+    ports:
+     - "8181:80"
+
+volumes:
+  mail-postgres-db:
+  mail-storage:

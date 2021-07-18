@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -e
+
+cp /etc/postfix/main.cf.tmpl /etc/postfix/main.cf
+
+cat <<EOF >> /etc/postfix/main.cf
+mydomain = $MYDOMAIN
+myhostname= $MYHOSTNAME
+myorigin = $MYORIGIN
+EOF
+
+#########
+cat <<EOF > /etc/postfix/pgsql-relay_domains.cf
+hosts = $PGHOST:${PGPORT:-5432}
+user = $PGUSER
+password = $PGPASS
+dbname = $PGDATABASE
+
+query = SELECT domain FROM domain WHERE domain='%s' and backupmx = true
+EOF
+
+cat <<EOF > /etc/postfix/pgsql-virtual_alias_maps.cf
+hosts = $PGHOST:${PGPORT:-5432}
+user = $PGUSER
+password = $PGPASS
+dbname = $PGDATABASE
+
+# Postfix 2.2 and later The SQL query template. See pgsql_table(5).
+query = SELECT goto FROM alias WHERE address='%s' AND active = true
+EOF
+
+cat <<EOF > /etc/postfix/pgsql-virtual_domains_maps.cf
+hosts = $PGHOST:${PGPORT:-5432}
+user = $PGUSER
+password = $PGPASS
+dbname = $PGDATABASE
+
+query = SELECT domain FROM domain WHERE domain='%s' and backupmx = false and active = true
+EOF
+
+cat <<EOF > /etc/postfix/pgsql-virtual_mailbox_maps.cf
+hosts = $PGHOST:${PGPORT:-5432}
+user = $PGUSER
+password = $PGPASS
+dbname = $PGDATABASE
+
+query = SELECT maildir FROM mailbox WHERE username='%s' AND active = true
+EOF
+###########
+
+cat <<EOF >> /etc/postfix/main.cf
+# Postfix >= 3.4 syntax
+smtpd_tls_chain_files = $SMTPD_TLS_KEY_FILE, $SMTPD_TLS_CERT_FILE
+# smtpd_tls_cert_file = $SMTPD_TLS_CERT_FILE
+# smtpd_tls_key_file = $SMTPD_TLS_KEY_FILE
+EOF
+
+
+cat <<EOF >> /etc/postfix/main.cf
+smtpd_tls_dh1024_param_file = $SMTPD_TLS_DH1024_PARAM_FILE
+smtpd_tls_dh512_param_file = $SMTPD_TLS_DH512_PARAM_FILE
+EOF
+
+
+cat <<EOF >> /etc/postfix/main.cf
+message_size_limit = ${MESSAGE_SIZE_LIMIT:-20480000}
+EOF
+
+cat <<EOF >> /etc/postfix/main.cf
+virtual_mailbox_base = $VIRTUAL_MAILBOX_BASE
+virtual_mailbox_limit = ${VIRTUAL_MAILBOX_LIMIT:-512000000}
+EOF
+
+# Run Postfix master process in the background
+if /usr/libexec/postfix/master -c /etc/postfix
+ then
+   echo 'Postfix started successfully'
+   # Keep tail process running to pipe Postfix log to stdout.
+   tail -F /var/log/mail.log
+ else
+   echo "Postfix did not start"
+   cat /var/log/mail.log
+fi
+
+
