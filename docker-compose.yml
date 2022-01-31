@@ -10,9 +10,9 @@ services:
      - POSTGRES_PASSWORD=somePassword
     volumes:
       - mail-postgres-db:/var/lib/mysql
-    ports:
+    # ports:
       # postgres
-      - "9001:5432"
+      # - "9001:5432"
   postfix:
     container_name: postfix
     image: "postfix:0.0.1"
@@ -20,9 +20,9 @@ services:
     depends_on:
       - postgresql
     environment:
-      - MYDOMAIN=m42.cz
-      - MYORIGIN=m42.cz
-      - MYHOSTNAME=geodude.m42.cz
+      - MYDOMAIN=example.org
+      - MYORIGIN=example.org
+      - MYHOSTNAME=mailserver.example.org
       - PGHOST=postgresql
       - PGPORT=5432
       - PGUSER=mail
@@ -36,10 +36,22 @@ services:
       - VIRTUAL_MAILBOX_BASE=/var/mailstorage
     volumes:
       - mail-storage:/var/mailstorage
-      - /etc/dhparam/dh2048.pem:/tmp/dh2048.pem
-      - /etc/dhparam/dh512.pem:/tmp/dh512.pem
-      - /etc/letsencrypt/live/geodude.m42.cz/privkey.pem:/tmp/key.pem
-      - /etc/letsencrypt/live/geodude.m42.cz/fullchain.pem:/tmp/cert.pem
+      - type: bind
+        source: /etc/dhparam/dh2048.pem
+        target: /tmp/dh2048.pem
+        read_only: true
+      - type: bind
+        source: /etc/dhparam/dh512.pem
+        target: /tmp/dh512.pem
+        read_only: true
+      - type: bind
+        source: /etc/letsencrypt/live/example.org/privkey.pem
+        target: /tmp/key.pem
+        read_only: true
+      - type: bind
+        source: /etc/letsencrypt/live/example.org/fullchain.pem
+        target: /tmp/cert.pem
+        read_only: true
     ports:
       # smtp
       - "25:25"

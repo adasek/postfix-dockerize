@@ -2,8 +2,13 @@
 
 Postgres and dovecot in the single container
 
- * **Single instance** only
+ * **Single instance** only (not synchronizing with a backup server)
  * With postgres backend
+
+## Build
+```bash
+docker build --tag=postfix:0.0.1  .
+```
 
 ## Env variables
  * MYDOMAIN - The internet domain name of this mail system. 
