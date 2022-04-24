@@ -11,7 +11,8 @@ EOF
 
 #########
 cat <<EOF > /etc/postfix/pgsql-relay_domains.cf
-hosts = $PGHOST:${PGPORT:-5432}
+hosts = $PGHOST
+port = ${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -20,7 +21,8 @@ query = SELECT domain FROM domain WHERE domain='%s' and backupmx = true
 EOF
 
 cat <<EOF > /etc/postfix/pgsql-virtual_alias_maps.cf
-hosts = $PGHOST:${PGPORT:-5432}
+hosts = $PGHOST
+port = ${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -30,7 +32,8 @@ query = SELECT goto FROM alias WHERE address='%s' AND active = true
 EOF
 
 cat <<EOF > /etc/postfix/pgsql-virtual_domains_maps.cf
-hosts = $PGHOST:${PGPORT:-5432}
+hosts = $PGHOST
+port = ${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -39,7 +42,8 @@ query = SELECT domain FROM domain WHERE domain='%s' and backupmx = false and act
 EOF
 
 cat <<EOF > /etc/postfix/pgsql-virtual_mailbox_maps.cf
-hosts = $PGHOST:${PGPORT:-5432}
+hosts = $PGHOST
+port = ${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
