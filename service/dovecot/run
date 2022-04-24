@@ -38,7 +38,7 @@ cat <<EOF > /etc/dovecot/dovecot-sql.conf
 driver = pgsql
 connect = host=${PGHOST} dbname=${PGDATABASE} user=${PGUSER} password=${PGPASS}
 default_pass_scheme = MD5-CRYPT
-user_query = SELECT '${VIRTUAL_MAILBOX_BASE}/%d/%u' as home, 'maildir:${VIRTUAL_MAILBOX_BASE}/%d/%u' as mail, 5000 AS uid, 5000 AS gid, concat('dirsize:storage=',  quota) AS quota FROM mailbox WHERE username = '%u' AND active = '1'
+user_query = SELECT concat('${VIRTUAL_MAILBOX_BASE}/', maildir) as home,  concat('maildir:${VIRTUAL_MAILBOX_BASE}/', maildir) as mail, 5000 AS uid, 5000 AS gid, concat('dirsize:storage=',  quota) AS quota FROM mailbox WHERE username = '%u' AND active = '1'
 password_query = SELECT username as user, password, '${VIRTUAL_MAILBOX_BASE}%d/%u' as userdb_home, 'maildir:${VIRTUAL_MAILBOX_BASE}/%d/%u' as userdb_mail, 5000 as  userdb_uid, 5000 as userdb_gid FROM mailbox WHERE username = '%u' AND active = '1'
 EOF
 
