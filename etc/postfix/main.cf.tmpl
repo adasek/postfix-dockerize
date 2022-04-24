@@ -65,7 +65,7 @@ mydestination = localhost localhost.localdomain
 # We basically allow "localhost (127.0.0.1)" relaying mails. I additionally
 # allowed my VPN hosts which are part of my 10.3.0.0/24 network (that's
 # basically the network that all Kubernetes nodes belong to).
-mynetworks = 127.0.0.1/32 10.3.0.0/24
+mynetworks = 127.0.0.1/32 10.3.0.0/24 172.16.0.0/12
 
 # You MUST specify $myhostname at the start of the text. This is required
 # by the SMTP protocol. (default: $myhostname ESMTP $mail_name)
