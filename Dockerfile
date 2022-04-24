@@ -19,4 +19,7 @@ COPY usr/sbin/runit_bootstrap /usr/sbin/runit_bootstrap
 COPY etc/rsyslog.conf /etc/rsyslog.conf
 COPY etc/postfix/* /etc/postfix/
 
+RUN mkdir /var/mailstorage
+RUN chown 5000:5000 /var/mailstorage
+
 ENTRYPOINT ["/usr/sbin/runit_bootstrap"]
