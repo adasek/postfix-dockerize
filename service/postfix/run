@@ -2,6 +2,7 @@
 set -e
 
 cp /etc/postfix/main.cf.tmpl /etc/postfix/main.cf
+cp /etc/postfix/master.cf.tmpl /etc/postfix/master.cf
 
 cat <<EOF >> /etc/postfix/main.cf
 mydomain = $MYDOMAIN
