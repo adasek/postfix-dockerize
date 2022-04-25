@@ -139,8 +139,9 @@ virtual_gid_maps = static:5000
 # Includes certificate files: dynamically
 # Sender MAY use TLS but we also accept unencrypted connections.
 smtpd_tls_security_level = may
-smtpd_tls_loglevel = 3
-smtpd_tls_received_header = yes
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = no
+smtpd_use_tls = yes
 smtpd_tls_session_cache_timeout = 3600s
 smtpd_tls_session_cache_database = lmdb:${data_directory}/smtpd_scache
 tls_random_source = dev:/dev/urandom
