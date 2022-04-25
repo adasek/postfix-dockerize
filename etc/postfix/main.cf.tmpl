@@ -175,6 +175,7 @@ smtpd_helo_required = yes
 # http://www.postfix.org/postconf.5.html#reject_unauth_destination
 smtpd_recipient_restrictions =
 	permit_mynetworks,
+    permit_sasl_authenticated,
 	reject_rbl_client ix.dnsbl.manitu.net,
 	reject_rbl_client bl.spamcop.net,
 	reject_rbl_client zen.spamhaus.org,
