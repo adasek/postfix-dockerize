@@ -145,8 +145,10 @@ smtpd_use_tls = yes
 smtpd_tls_session_cache_timeout = 3600s
 smtpd_tls_session_cache_database = lmdb:${data_directory}/smtpd_scache
 tls_random_source = dev:/dev/urandom
+
 # This one is maintained by Alpine Linux but you can add your own if you want.
 smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+smtp_tls_security_level = may
 
 # Better forward secrecy settings. With prime-field EDH, OpenSSL wants the
 # server to provide two explicitly-selected (prime, generator) combinations.
