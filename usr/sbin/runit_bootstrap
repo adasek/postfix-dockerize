@@ -8,5 +8,5 @@ sv_stop() {
 }
 
 trap "sv_stop; exit" SIGTERM
-exec /sbin/runsvdir /etc/service &
+exec /usr/sbin/runsvdir /etc/service &
 wait
