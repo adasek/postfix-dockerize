@@ -1,21 +1,20 @@
-version: "3.7"
 services:
   postgresql:
     container_name: postgresql
-    image: postgres:latest
+    image: postgres:14
     restart: always
     environment:
      - POSTGRES_DB=mail
      - POSTGRES_USER=mail
      - POSTGRES_PASSWORD=somePassword
     volumes:
-      - mail-postgres-db:/var/lib/mysql
+      - /root/mail/postgresql-data:/var/lib/mysql
     # ports:
       # postgres
       # - "9001:5432"
   postfix:
     container_name: postfix
-    image: "postfix:0.0.1"
+    image: "postfix:0.0.9"
     restart: always
     depends_on:
       - postgresql
@@ -35,7 +34,7 @@ services:
       - MESSAGE_SIZE_LIMIT=20480000
       - VIRTUAL_MAILBOX_BASE=/var/mailstorage
     volumes:
-      - mail-storage:/var/mailstorage
+      - /root/mail/mailstorage:/var/mailstorage
       - type: bind
         source: /etc/dhparam/dh2048.pem
         target: /tmp/dh2048.pem
@@ -59,6 +58,9 @@ services:
       - "465:465"
       # submission port
       - "587:587"
+      # Dovecot imap
+      - "993:993"
+
   postfixadmin:
     container_name: postfixadmin
     image: "postfixadmin:latest"
@@ -73,7 +75,3 @@ services:
       - POSTFIXADMIN_DB_NAME=mail
     ports:
      - "8181:80"
-
-volumes:
-  mail-postgres-db:
-  mail-storage:

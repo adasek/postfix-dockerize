@@ -40,7 +40,7 @@ For the first run it is however needed to:
    * a `$CONF['setup_password'] = '$2y$10$somelonghashDO/X9Plg/longlonghash';` line appears
  * Add the generated setup password to the config.local.php inside the container:
    * `docker exec -it postfixadmin bash`
-     * `sed -e 's/changeme/$2y$10$somelonghashDO\/X9Plg\/longlonghash/' config.local.php > /tmp/a; mv /tmp/a config.local.php` 
+     * `sed -e 's/changeme/$2y$10$somelonghashDO\/pleaseescapebackslashes/' config.local.php > /tmp/a; mv /tmp/a config.local.php` 
      * Note that the forward slashes inside sed subsitution string must be **escaped**!
  * Use this password to add an admin email to the database
    * Visit `http://localhost:8181/setup.php`
