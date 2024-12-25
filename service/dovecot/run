@@ -43,4 +43,5 @@ password_query = SELECT username as user, password, '${VIRTUAL_MAILBOX_BASE}%d/%
 EOF
 
 # Run Dovecot as a background process
+sleep 20
 dovecot -F
