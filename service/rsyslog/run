@@ -1,5 +1,33 @@
-#!/bin/bash
-set -e
+#!/bin/sh
 
-# "-n" avoid's auto-backgrounding of the process.
+# Check if rsyslogd is actually running
+check_rsyslog_running() {
+  PID_FILE="/var/run/rsyslogd.pid"
+
+  # Check if PID file exists
+  if [ -f "$PID_FILE" ]; then
+    # Get PID from file
+    RSYSLOG_PID=$(cat "$PID_FILE")
+
+    # Check if process with that PID exists and is rsyslogd
+    if ps -p "$RSYSLOG_PID" -o comm= 2>/dev/null | grep -q "rsyslogd"; then
+      # Process is actually running
+      return 0
+    else
+      # PID file exists but process is not running
+      return 1
+    fi
+  else
+    # PID file doesn't exist
+    return 1
+  fi
+}
+
+# Remove stale PID file if the process isn't actually running
+if ! check_rsyslog_running; then
+  rm -f /var/run/rsyslogd.pid
+  echo "Removed stale PID file"
+fi
+
+# Start rsyslogd in foreground mode
 exec rsyslogd -n
