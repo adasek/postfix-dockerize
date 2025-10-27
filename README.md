@@ -27,13 +27,16 @@ docker build --tag=postfix:0.0.1  .
  * VIRTUAL_MAILBOX_BASE - mount from host filesystem, actual mail storage
  * VIRTUAL_MAILBOX_LIMIT - Limit on the size of virtual mailbox files. In bytes, default value 512000000 for 480MB
 
-### Integration
+### Architecture
 Integration via docker-compose with
  * postgresql (used as a database)
  * postfixadmin
 
 Postfixadmin provides an official docker container and runs a migrations on database first time running.
-For the first run it is however needed to:
+
+### INSTALLATION
+#### Set postfixadmin password
+For the first run it is needed to:
  * Run containers (via `docker-compose up`)
  * Access the postfixadmin /setup.php and generate a setup_password hash
    * `http://localhost:8181/setup.php` - enter some string twice and hit [Generate setup_password_hash]
@@ -46,8 +49,20 @@ For the first run it is however needed to:
    * Visit `http://localhost:8181/setup.php`
    * Enter admin login+password in **Add Superadmin Account**, hit [Add Admin]
 Entered credentials should be written into the permanent volume of the database.
+
+#### Create your domain and accounts
 You may login to postfixadmin in `http://localhost:8181/`
      
+#### IPV6 - open ports in firewall
+Docker handles iptables rules for ipv4 for open ports, but it doesn't do the same for ipv6.
+If using ubuntu in a host system, you may run this to expose the ports in both ipv4 and ipv6:
+```bash
+sudo ufw allow 993/tcp
+sudo ufw allow 587/tcp
+sudo ufw allow 465/tcp
+sudo ufw allow 25/tcp
+```
+
 ### Derived from 
  * [github.com/githubixx/kubernetes-postfix](https://github.com/githubixx/kubernetes-postfix)
  * Blogpost: [Run a Postfix mail server with TLS and SPF in Kubernetes](https://www.tauceti.blog/post/run-postfix-in-kubernetes/).
