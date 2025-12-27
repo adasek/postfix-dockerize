@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postfix_test_postgres
+    image: postgres:15
+    environment:
+      POSTGRES_DB: postfix
+      POSTGRES_USER: postfix
+      POSTGRES_PASSWORD: postfix_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postfix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postfixadmin:
+    container_name: postfix_test_admin
+    image: postfixadmin:latest
+    depends_on:
+      - postgres
+    environment:
+      POSTFIXADMIN_DB_TYPE: pgsql
+      POSTFIXADMIN_DB_HOST: postgres
+      POSTFIXADMIN_DB_USER: postfix
+      POSTFIXADMIN_DB_PASSWORD: postfix_password
+      POSTFIXADMIN_DB_NAME: postfix
+      POSTFIXADMIN_SETUP_PASSWORD: test_setup_password
+    ports:
+      - "8181:80"
+
+  postfix:
+    container_name: postfix_test_mail
+    build: ..
+    depends_on:
+      - postgres
+      - postfixadmin
+    environment:
+      MYDOMAIN: example.com
+      MYORIGIN: example.com
+      MYHOSTNAME: mail.example.com
+      PGHOST: postgres
+      PGUSER: postfix
+      PGPASS: postfix_password
+      PGDATABASE: postfix
+      SMTPD_TLS_CERT_FILE: /etc/ssl/certs/cert.pem
+      SMTPD_TLS_KEY_FILE: /etc/ssl/certs/key.pem
+      SMTPD_TLS_DH1024_PARAM_FILE: /etc/ssl/certs/dh2048.pem
+      SMTPD_TLS_DH512_PARAM_FILE: /etc/ssl/certs/dh512.pem
+    ports:
+      - "25:25"
+      - "587:587"
+      - "465:465"
+      - "993:993"
+    volumes:
+      - ./test-certs:/etc/ssl/certs
+      - maildata:/var/mail
+
+volumes:
+  maildata:

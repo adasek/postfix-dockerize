@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "postfix-dockerize"
+version = "0.1.0"
+description = "Integration tests for postfix-dockerize"
+authors = ["Adam Benda"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^9.0.2"
+pytest-timeout = "^2.4.0"
+imapclient = "^3.0.1"
+faker = "^39.0.0"
+docker = "^7.1.0"
+psycopg2-binary = "^2.9.11"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.12.0"
+flake8 = "^7.3.0"
+mypy = "^1.19.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+timeout = 300
