@@ -46,8 +46,6 @@ def docker_compose_services():
 
     yield
 
-    # Note: We don't stop services here - let bin/test handle cleanup
-    # This allows for --keep flag to work properly
 
 def wait_for_port(host, port, timeout=60):
     """Wait for a port to be available"""
@@ -84,40 +82,36 @@ def wait_for_services(docker_client, docker_compose_services):
 
     # First wait for containers to be running
     while time.time() - start < timeout:
-        try:
-            all_running = True
-            for service_name in required_services:
-                try:
-                    container = docker_client.containers.get(service_name)
-                    if container.status != 'running':
-                        all_running = False
-                        logger.debug(f"{service_name} is {container.status}")
-                        break
-                except docker.errors.NotFound:
-                    all_running = False
-                    logger.debug(f"{service_name} not found")
-                    break
+        all_running = True
+        for service_name in required_services:
+            try:
+                container = docker_client.containers.get(service_name)
+                health_check = container.attrs['State'].get('Health')
+                healthy = (container.status == 'running') and ((health_check is None) or health_check['Status']=='healthy')
 
-            if all_running:
-                logger.info("All containers are running")
+                if not healthy:
+                    all_running = False
+                    logger.debug(f"{service_name} is {container.status} with {health_check}")
+                    break
+            except docker.errors.NotFound:
+                all_running = False
+                logger.debug(f"{service_name} not found")
                 break
-        except Exception as e:
-            logger.debug(f"Error checking containers: {e}")
+
+        if all_running:
+            logger.info("All containers are running")
+            break
 
         time.sleep(2)
     else:
         raise TimeoutError("Containers did not start in time")
 
-    # Now wait for ports to be available
+    # Ensure ports are available
     logger.info("Waiting for service ports...")
     for service, port in required_ports.items():
         logger.info(f"Waiting for {service} on port {port}...")
         if not wait_for_port('localhost', port, timeout=60):
             raise TimeoutError(f"Port {port} ({service}) did not become available")
-
-    # Additional wait for services to fully initialize
-    logger.info("Services are up, waiting for full initialization (15s)...")
-    time.sleep(15)
 
     return True
 
@@ -215,9 +209,6 @@ def setup_test_domain_and_user(db_connection, test_user):
     logger.info("✓ Test domain and user are ready")
 
     yield
-
-    # Cleanup is optional - we destroy the whole database container anyway
-
 
 
 @pytest.fixture

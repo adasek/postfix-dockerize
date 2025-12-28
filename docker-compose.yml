@@ -9,6 +9,11 @@ services:
      - POSTGRES_PASSWORD=somePassword
     volumes:
       - /root/mail/postgresql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postfix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     # ports:
       # postgres
       # - "9001:5432"
@@ -60,13 +65,24 @@ services:
       - "587:587"
       # Dovecot imap
       - "993:993"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postfixadmin:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "postfix status && dovecot service status && nc -z localhost 587 && nc -z localhost 993"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postfixadmin:
     container_name: postfixadmin
     image: "postfixadmin:latest"
     restart: always
     depends_on:
-      - postgresql
+      postgresql:
+        condition: service_healthy
     environment:
       - POSTFIXADMIN_DB_TYPE=pgsql
       - POSTFIXADMIN_DB_HOST=postgresql

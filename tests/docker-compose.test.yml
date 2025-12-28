@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   postgres:
     container_name: postfix_test_postgres
-    image: postgres:15
+    image: postgres:14
     environment:
       POSTGRES_DB: postfix
       POSTGRES_USER: postfix
@@ -19,8 +17,10 @@ services:
   postfixadmin:
     container_name: postfix_test_admin
     image: postfixadmin:latest
+    restart: always
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       POSTFIXADMIN_DB_TYPE: pgsql
       POSTFIXADMIN_DB_HOST: postgres
@@ -35,8 +35,10 @@ services:
     container_name: postfix_test_mail
     build: ..
     depends_on:
-      - postgres
-      - postfixadmin
+      postgres:
+        condition: service_healthy
+      postfixadmin:
+        condition: service_started
     environment:
       MYDOMAIN: example.com
       MYORIGIN: example.com
@@ -57,6 +59,11 @@ services:
     volumes:
       - ./test-certs:/etc/ssl/certs
       - maildata:/var/mail
+    healthcheck:
+      test: ["CMD-SHELL", "postfix status && dovecot service status && nc -z localhost 587 && nc -z localhost 993"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   maildata:

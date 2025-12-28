@@ -6,7 +6,7 @@ Postgres and dovecot in the single container
  * With postgres backend
 
 ## Build
-```bash
+```bashc
 docker build --tag=postfix:0.0.1  .
 ```
 
@@ -62,6 +62,22 @@ sudo ufw allow 587/tcp
 sudo ufw allow 465/tcp
 sudo ufw allow 25/tcp
 ```
+
+### Testing
+Using Python / Pytest with dependencies managed by Poetry.
+
+```bash
+poetry install
+poetry run pytest
+```
+Restart / clean the containers
+```bash
+docker-compose -f tests/docker-compose.test.yml down
+sudo snap restart docker
+```
+
+
+
 
 ### Derived from 
  * [github.com/githubixx/kubernetes-postfix](https://github.com/githubixx/kubernetes-postfix)
