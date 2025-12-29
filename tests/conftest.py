@@ -78,9 +78,9 @@ def wait_for_services(docker_client, docker_compose_services):
     timeout = 120
     start = time.time()
 
-    required_services = ['postfix_test_mail', 'postfix_test_postgres', 'postfix_test_admin']
+    required_services = ['postfix_test_mail', 'postfix_test_postgresql', 'postfix_test_admin']
     required_ports = {
-        'postgres': 5432,
+        'postgresql': 5432,
         'postfixadmin': 8181,
         'smtp': 587,
         'imap': 993
@@ -99,7 +99,7 @@ def wait_for_services(docker_client, docker_compose_services):
 
                 if not healthy:
                     all_running = False
-                    logger.info(f"{service_name} is {container.status} but health_check says {health_check.get('Status')}")
+                    logger.info(f"{service_name} is {container.status}")
                     break
             except docker.errors.NotFound:
                 all_running = False
@@ -144,9 +144,9 @@ def db_connection(wait_for_services):
             conn = psycopg2.connect(
                 host='localhost',
                 port=5432,
-                database='postfix',
-                user='postfix',
-                password='postfix_password',
+                database='mail',
+                user='mail',
+                password='somePassword',
                 connect_timeout=10
             )
             logger.info("Successfully connected to PostgreSQL")

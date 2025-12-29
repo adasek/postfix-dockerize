@@ -14,16 +14,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # ports:
-      # postgres
-      # - "9001:5432"
   postfix:
-    container_name: postfix
-    image: "postfix:0.0.9"
+    build: .
+    container_name: postfix-dockerize-postfix
     restart: always
     depends_on:
       postgresql:
         condition: service_healthy
+      postfixadmin:
+        condition: service_started
     environment:
       - MYDOMAIN=example.org
       - MYORIGIN=example.org
@@ -64,11 +63,6 @@ services:
       - "587:587"
       # Dovecot imap
       - "993:993"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      postfixadmin:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "postfix status && dovecot service status && nc -z localhost 587 && nc -z localhost 993"]
       interval: 10s
@@ -76,7 +70,7 @@ services:
       retries: 5
 
   postfixadmin:
-    container_name: postfixadmin
+    container_name: postfix-dockerize-postfixadmin
     image: "postfixadmin:latest"
     restart: always
     depends_on:
