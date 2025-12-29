@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 
 class TestSMTP:
 
-    def test_smtp_connection_port_587(self):
+    def test_smtp_connection_port_587(self, wait_for_services):
         """Test SMTP connection on submission port with STARTTLS"""
         server = smtplib.SMTP('localhost', 587, timeout=10)
         code, msg = server.ehlo()
@@ -16,7 +16,7 @@ class TestSMTP:
         assert code == 220, f"STARTTLS failed with code {code}"
         server.quit()
 
-    def test_smtp_authentication(self, smtp_connection, test_user):
+    def test_smtp_authentication(self, smtp_connection, setup_test_domain_and_user, test_user):
         """Test SMTP authentication with valid credentials"""
         smtp_connection.starttls()
         smtp_connection.login(test_user['email'], test_user['password'])

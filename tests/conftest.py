@@ -126,7 +126,7 @@ def test_user():
     }
 
 @pytest.fixture(scope="session")
-def db_connection():
+def db_connection(wait_for_services):
     """PostgreSQL connection for direct database verification"""
     max_retries = 10
     retry_delay = 3
