@@ -46,6 +46,14 @@ def docker_compose_services():
 
     yield
 
+    # Cleanup - runs after all tests are finished
+    logger.info("Stopping docker-compose services...")
+    subprocess.run(
+        ["docker-compose", "-f", str(COMPOSE_FILE), "down", "-v"],
+        check=False  # Don't fail if cleanup has issues
+    )
+    logger.info("Services stopped and volumes removed")
+
 
 def wait_for_port(host, port, timeout=60):
     """Wait for a port to be available"""
@@ -64,7 +72,7 @@ def wait_for_port(host, port, timeout=60):
         time.sleep(1)
     return False
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def wait_for_services(docker_client, docker_compose_services):
     """Wait for all services to be healthy"""
     timeout = 120

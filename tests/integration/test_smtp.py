@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 
 class TestSMTP:
 
-    def test_smtp_connection_port_587(self, wait_for_services):
+    def test_smtp_connection_port_587(self):
         """Test SMTP connection on submission port with STARTTLS"""
         server = smtplib.SMTP('localhost', 587, timeout=10)
         code, msg = server.ehlo()

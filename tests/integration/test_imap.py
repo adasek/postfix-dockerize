@@ -4,7 +4,7 @@ import ssl
 
 class TestIMAP:
 
-    def test_imap_connection(self, imap_connection):
+    def test_imap_connection(self):
         """Test IMAP SSL connection"""
         client = IMAPClient('localhost', port=993, ssl=True,
                             ssl_context=ssl._create_unverified_context())
@@ -15,7 +15,7 @@ class TestIMAP:
         imap_connection.login(test_user['email'], test_user['password'])
         # If we get here without exception, auth succeeded
 
-    def test_imap_authentication_failure(self, imap_connection, test_user):
+    def test_imap_authentication_failure(self, test_user):
         """Test IMAP authentication with wrong password"""
         client = IMAPClient('localhost', port=993, ssl=True,
                             ssl_context=ssl._create_unverified_context())
