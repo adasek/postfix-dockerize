@@ -37,7 +37,7 @@ def docker_compose_services():
     if not services_running:
         logger.info("Starting docker-compose services...")
         subprocess.run(
-            ["docker-compose", "-f", str(COMPOSE_FILE), "up", "-d"],
+            ["docker-compose", "-f", str(COMPOSE_FILE), "up", "--build", "--force-recreate", "-d"],
             check=True
         )
         logger.info("Services started")
