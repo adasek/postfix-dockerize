@@ -1,14 +1,14 @@
 services:
   postgresql:
-    container_name: postgresql
-    image: postgres:14
+    container_name: postfix-dockerize-postgresql
+    image: postgres:18
     restart: always
     environment:
      - POSTGRES_DB=mail
      - POSTGRES_USER=mail
      - POSTGRES_PASSWORD=somePassword
     volumes:
-      - /root/mail/postgresql-data:/var/lib/mysql
+      - /root/mail/postgresql18-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postfix"]
       interval: 10s
@@ -22,7 +22,8 @@ services:
     image: "postfix:0.0.9"
     restart: always
     depends_on:
-      - postgresql
+      postgresql:
+        condition: service_healthy
     environment:
       - MYDOMAIN=example.org
       - MYORIGIN=example.org

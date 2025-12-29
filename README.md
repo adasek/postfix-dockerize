@@ -63,6 +63,34 @@ sudo ufw allow 465/tcp
 sudo ufw allow 25/tcp
 ```
 
+### Upgrading
+If you are upgrading postgres container use:
+
+##### 1. Dump from old postgres container
+```bash
+docker exec -t postfix-dockerize-postgresql pg_dumpall -U mail > pg_backup.sql
+```
+##### 2. Stop and destroy old postgres container
+```bash
+docker-compose down
+docker rm postfix-dockerize-postgresql
+```
+##### 3. Edit docker-compose.yml
+```yml
+services:
+ postgresql:
+   image: postgres:18
+   volumes:
+     - /root/mail/postgresql18-data:/var/lib/postgresql
+```
+Note the mountpoint was /var/lib/postgresql/data for postgres17 and bellow.
+#### 4. Run the new container and import
+```bash
+docker-compose up postgresql
+docker exec -i postfix-dockerize-postgresql psql -U mail < pg_backup.sql
+```
+
+
 ### Testing
 Using Python / Pytest with dependencies managed by Poetry.
 

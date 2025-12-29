@@ -1,7 +1,7 @@
 services:
   postgres:
     container_name: postfix_test_postgres
-    image: postgres:14
+    image: postgres:18
     environment:
       POSTGRES_DB: postfix
       POSTGRES_USER: postfix
