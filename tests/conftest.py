@@ -91,11 +91,11 @@ def wait_for_services(docker_client, docker_compose_services):
 
                 if not healthy:
                     all_running = False
-                    logger.debug(f"{service_name} is {container.status} with {health_check}")
+                    logger.info(f"{service_name} is {container.status} but health_check says {health_check.get('Status')}")
                     break
             except docker.errors.NotFound:
                 all_running = False
-                logger.debug(f"{service_name} not found")
+                logger.info(f"{service_name} not found")
                 break
 
         if all_running:

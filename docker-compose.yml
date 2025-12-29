@@ -59,8 +59,6 @@ services:
     ports:
       # smtp
       - "25:25"
-      # clients connecting SSL
-      - "465:465"
       # submission port
       - "587:587"
       # Dovecot imap

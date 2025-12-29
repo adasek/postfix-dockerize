@@ -54,7 +54,6 @@ services:
     ports:
       - "25:25"
       - "587:587"
-      - "465:465"
       - "993:993"
     volumes:
       - ./test-certs:/etc/ssl/certs
