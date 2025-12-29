@@ -10,7 +10,7 @@ services:
     volumes:
       - /root/mail/postgresql18-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postfix"]
+      test: ["CMD-SHELL", "pg_isready -U mail"]
       interval: 10s
       timeout: 5s
       retries: 5
