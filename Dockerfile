@@ -22,6 +22,5 @@ COPY etc/postfix/* /etc/postfix/
 
 RUN mkdir /var/mailstorage
 RUN chown 5000:5000 /var/mailstorage
-RUN openssl dhparam -out /etc/dovecot/dh.pem 4096
 
 ENTRYPOINT ["/usr/sbin/runit_bootstrap"]

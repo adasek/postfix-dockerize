@@ -21,6 +21,7 @@ docker build --tag=postfix:0.0.1  .
  * PGDATABASE
  * SMTPD_TLS_CERT_FILE - mount from host filesystem; e.g. /etc/letsencrypt/live/example.org/fullchain.pem
  * SMTPD_TLS_KEY_FILE - mount from host filesystem; e.g. /etc/letsencrypt/live/example.org/privkey.pem
+ * DOVECOT_DH_FILE - generated once with `openssl dhparam -out dhparam/dh4096.pem 4096` e.g. /etc/dh4096.pem
  * SMTPD_TLS_DH1024_PARAM_FILE - generated once with `openssl dhparam -out dhparam/dh2048.pem 2048` e.g. /etc/dh2048.pem
  * SMTPD_TLS_DH512_PARAM_FILE - generated once with `openssl dhparam -out dhparam/dh512.pem 512` e.g. /etc/dh512.pem
  * MESSAGE_SIZE_LIMIT - in bytes, default value 20480000 for 20MB

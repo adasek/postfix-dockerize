@@ -38,6 +38,7 @@ services:
       - SMTPD_TLS_KEY_FILE=/tmp/key.pem
       - SMTPD_TLS_DH1024_PARAM_FILE=/tmp/dh2048.pem
       - SMTPD_TLS_DH512_PARAM_FILE=/tmp/dh512.pem
+      - DOVECOT_DH_FILE=/tmp/dh4096.pem
       - MESSAGE_SIZE_LIMIT=20480000
       - VIRTUAL_MAILBOX_BASE=/var/mailstorage
     volumes:
@@ -49,6 +50,10 @@ services:
       - type: bind
         source: /etc/dhparam/dh512.pem
         target: /tmp/dh512.pem
+        read_only: true
+      - type: bind
+        source: /etc/dhparam/dh4096.pem
+        target: /tmp/dh4096.pem
         read_only: true
       - type: bind
         source: /etc/letsencrypt/live/example.org/privkey.pem
