@@ -105,6 +105,11 @@ docker-compose -f tests/docker-compose.test.yml down
 sudo snap restart docker
 ```
 
+For debug, you may show logs when you're running the tests
+```bash
+docker-compose -f tests/docker-compose.test.yml logs -f
+```
+
 
 
 
