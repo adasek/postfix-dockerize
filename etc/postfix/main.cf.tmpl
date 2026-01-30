@@ -56,16 +56,10 @@ append_dot_mydomain = no
 mydestination = localhost localhost.localdomain
 
 # The list of "trusted" remote SMTP clients that have more privileges
-# than "strangers". In particular, "trusted" SMTP clients are allowed
-# to relay mail through Postfix. See the smtpd_relay_restrictions
-# parameter description in the postconf(5) manual. You can specify the
-# list of "trusted" network addresses by hand or you can let Postfix
-# do it for you (which is the default). See the description of the
-# "mynetworks_style" parameter for more information.
-# We basically allow "localhost (127.0.0.1)" relaying mails. I additionally
-# allowed my VPN hosts which are part of my 10.3.0.0/24 network (that's
-# basically the network that all Kubernetes nodes belong to).
-mynetworks = 127.0.0.1/32 10.3.0.0/24 172.16.0.0/12
+# than "strangers"
+# Dovecot share the container with postfix,
+there is no other machines/containers we need to trust.
+mynetworks = 127.0.0.0/8
 
 # You MUST specify $myhostname at the start of the text. This is required
 # by the SMTP protocol. (default: $myhostname ESMTP $mail_name)
