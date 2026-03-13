@@ -13,7 +13,7 @@ protocols {
 }
 
 # Authentication settings
-auth_mechanisms = plain
+auth_mechanisms = plain login
 auth_allow_cleartext = yes
 
 # PostgreSQL connection settings
