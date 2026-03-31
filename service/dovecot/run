@@ -51,6 +51,13 @@ mail_path = ~
 first_valid_uid = 5000
 first_valid_gid = 5000
 
+# Plain IMAP listener on 143 for internal Docker access (no SSL hostname issues)
+service imap-login {
+  inet_listener imap {
+    port = 143
+  }
+}
+
 # Auth service for Postfix SASL
 service auth {
   unix_listener /var/spool/postfix/private/auth {
