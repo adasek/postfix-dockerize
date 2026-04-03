@@ -91,3 +91,27 @@ services:
       - POSTFIXADMIN_DB_NAME=mail
     ports:
      - "8181:80"
+
+  roundcube:
+    container_name: postfix-dockerize-roundcube
+    image: roundcube/roundcubemail:latest
+    restart: always
+    depends_on:
+      postfix:
+        condition: service_healthy
+      postgresql:
+        condition: service_healthy
+    environment:
+      - ROUNDCUBEMAIL_DB_TYPE=pgsql
+      - ROUNDCUBEMAIL_DB_HOST=postgresql
+      - ROUNDCUBEMAIL_DB_USER=mail
+      - ROUNDCUBEMAIL_DB_PASSWORD=somePassword
+      - ROUNDCUBEMAIL_DB_NAME=mail
+      - ROUNDCUBEMAIL_DB_PREFIX=rc_
+      - ROUNDCUBEMAIL_DEFAULT_HOST=postfix
+      - ROUNDCUBEMAIL_DEFAULT_PORT=143
+      - ROUNDCUBEMAIL_SMTP_SERVER=postfix
+      - ROUNDCUBEMAIL_SMTP_PORT=587
+      - ROUNDCUBEMAIL_SKIN=elastic
+    ports:
+      - "8182:80"
