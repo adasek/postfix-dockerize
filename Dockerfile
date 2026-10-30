@@ -7,6 +7,7 @@ RUN apk add --no-cache \
         dovecot \
         libsasl \
         mailx \
+        opendkim \
         postfix \
         postfix-policyd-spf-perl \
         postfix-pgsql \

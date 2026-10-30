@@ -57,6 +57,7 @@ spec:
             - ALL
             add:
             - DAC_OVERRIDE
+            - CHOWN
             - FOWNER
             - SETUID
             - SETGID
@@ -104,6 +105,9 @@ spec:
           subPath: dh2048.pem
           mountPath: /etc/postfix/dh2048.pem
           readOnly: true
+        - name: dkim-keys
+          mountPath: /etc/dkim
+          readOnly: true
       volumes:
       - name: config
         configMap:
@@ -126,3 +130,7 @@ spec:
       - name: dhparam
         secret:
           secretName: dhparam
+      - name: dkim-keys
+        hostPath:
+          path: /etc/dkim
+          type: DirectoryOrCreate
