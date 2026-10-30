@@ -89,6 +89,7 @@ services:
       - POSTFIXADMIN_DB_USER=mail
       - POSTFIXADMIN_DB_PASSWORD=somePassword
       - POSTFIXADMIN_DB_NAME=mail
+      - POSTFIXADMIN_ENCRYPT=php_crypt:BLOWFISH:10:{BLF-CRYPT}
     ports:
      - "8181:80"
 
