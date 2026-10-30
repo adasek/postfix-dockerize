@@ -132,6 +132,8 @@ virtual_gid_maps = static:5000
 # Includes certificate files: dynamically
 # Sender MAY use TLS but we also accept unencrypted connections.
 smtpd_tls_security_level = may
+# Do not advertise or accept SMTP AUTH until the connection is encrypted.
+smtpd_tls_auth_only = yes
 smtpd_tls_loglevel = 1
 smtpd_tls_received_header = no
 smtpd_use_tls = yes

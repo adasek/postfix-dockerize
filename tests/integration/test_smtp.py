@@ -16,6 +16,13 @@ class TestSMTP:
         assert code == 220, f"STARTTLS failed with code {code}"
         server.quit()
 
+    def test_smtp_authentication_requires_tls(self):
+        """Test that the SMTP server refuses AUTH before STARTTLS"""
+        with smtplib.SMTP('localhost', 25, timeout=10) as server:
+            server.ehlo()
+            code, _ = server.docmd('AUTH', 'PLAIN')
+            assert code >= 500, f"AUTH without TLS was not refused (code {code})"
+
     def test_smtp_authentication(self, smtp_connection, setup_test_domain_and_user, test_user):
         """Test SMTP authentication with valid credentials"""
         smtp_connection.starttls()
