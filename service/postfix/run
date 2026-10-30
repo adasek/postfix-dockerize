@@ -1,6 +1,111 @@
 #!/usr/bin/env bash
 set -e
 
+DKIM_KEYS_DIR=${DKIM_KEYS_DIR:-/etc/dkim}
+mkdir -p /etc/opendkim /run/opendkim
+chown root:opendkim /run/opendkim
+chmod 0770 /run/opendkim
+rm -rf /run/opendkim/keys
+install -d -o opendkim -g opendkim -m 0700 /run/opendkim/keys
+: > /etc/opendkim/KeyTable
+: > /etc/opendkim/SigningTable
+rm -f /run/opendkim/enabled /run/opendkim/configured
+
+declare -A dkim_domains
+declare -A dkim_domain_directories
+declare -A dkim_missing_logged
+dkim_key_count=0
+if [[ -d "$DKIM_KEYS_DIR" ]]; then
+  for domain_dir in "$DKIM_KEYS_DIR"/*/; do
+    [[ -d "$domain_dir" ]] || continue
+    domain=${domain_dir%/}
+    domain=${domain##*/}
+    domain=${domain,,}
+    if [[ ! "$domain" =~ ^[a-z0-9.-]+$ ]]; then
+      echo "DKIM: ignoring invalid domain directory: $domain_dir"
+      continue
+    fi
+    dkim_domain_directories[$domain]=1
+    domain_dir=${domain_dir%/}
+
+    for key_file in "$domain_dir"/*.private; do
+      [[ -f "$key_file" ]] || continue
+      selector=${key_file##*/}
+      selector=${selector%.private}
+      if [[ ! "$selector" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        echo "DKIM: ignoring invalid selector key: $key_file"
+        continue
+      fi
+      if [[ ! -r "$key_file" ]]; then
+        echo "DKIM: key is not readable by the container: $key_file"
+        continue
+      fi
+
+      runtime_key_file="/run/opendkim/keys/$domain/$selector.private"
+      if ! install -D -o opendkim -g opendkim -m 0600 "$key_file" "$runtime_key_file"; then
+        echo "DKIM: could not copy private key for domain=$domain selector=$selector; skipping"
+        continue
+      fi
+
+      echo "DKIM: found key for domain=$domain selector=$selector file=$key_file"
+      if [[ -n "${dkim_domains[$domain]:-}" ]]; then
+        echo "DKIM: ignoring additional selector=$selector for domain=$domain; only one active selector per domain is supported"
+        continue
+      fi
+
+      dkim_domains[$domain]=1
+      printf '%s %s:%s:%s\n' "$selector._domainkey.$domain" "$domain" "$selector" "$runtime_key_file" >> /etc/opendkim/KeyTable
+      printf '*@%s %s._domainkey.%s\n' "$domain" "$selector" "$domain" >> /etc/opendkim/SigningTable
+      dkim_key_count=$((dkim_key_count + 1))
+    done
+done
+fi
+
+for expected_domain in "${!dkim_domain_directories[@]}"; do
+  if [[ -z "${dkim_domains[$expected_domain]:-}" ]]; then
+    echo "DKIM: no private key found for domain=$expected_domain; outbound mail for this domain will be sent unsigned"
+    dkim_missing_logged[$expected_domain]=1
+  fi
+done
+
+expected_domains=${DKIM_DOMAINS:-${MYDOMAIN:-}}
+if [[ -n "$expected_domains" ]]; then
+  IFS=, read -r -a expected_domain_list <<< "$expected_domains"
+  for expected_domain in "${expected_domain_list[@]}"; do
+    expected_domain=${expected_domain,,}
+    expected_domain="${expected_domain#"${expected_domain%%[![:space:]]*}"}"
+    expected_domain="${expected_domain%"${expected_domain##*[![:space:]]}"}"
+    [[ -n "$expected_domain" ]] || continue
+    if [[ -z "${dkim_domains[$expected_domain]:-}" && -z "${dkim_missing_logged[$expected_domain]:-}" ]]; then
+      echo "DKIM: no private key found for domain=$expected_domain; outbound mail for this domain will be sent unsigned"
+      dkim_missing_logged[$expected_domain]=1
+    fi
+  done
+fi
+
+cat > /etc/opendkim.conf <<'EOF'
+Syslog                  yes
+SyslogSuccess           yes
+UMask                   007
+Mode                    sv
+Canonicalization        relaxed/simple
+Socket                  inet:8891@127.0.0.1
+PidFile                 /run/opendkim/opendkim.pid
+UserID                  opendkim:opendkim
+MTA                     ORIGINATING
+KeyTable                /etc/opendkim/KeyTable
+SigningTable            refile:/etc/opendkim/SigningTable
+InternalHosts           127.0.0.1
+EOF
+
+if (( dkim_key_count > 0 )); then
+  touch /run/opendkim/enabled
+  echo "DKIM: configured signing for $dkim_key_count domain(s)"
+else
+  echo "DKIM: no readable private keys found in $DKIM_KEYS_DIR; outbound signing is disabled"
+fi
+touch /run/opendkim/configured
+
 cp /etc/postfix/main.cf.tmpl /etc/postfix/main.cf
 cp /etc/postfix/master.cf.tmpl /etc/postfix/master.cf
 
@@ -9,6 +114,15 @@ mydomain = $MYDOMAIN
 myhostname= $MYHOSTNAME
 myorigin = $MYORIGIN
 EOF
+
+if (( dkim_key_count > 0 )); then
+  cat <<'EOF' >> /etc/postfix/main.cf
+smtpd_milters = inet:127.0.0.1:8891
+non_smtpd_milters = inet:127.0.0.1:8891
+milter_default_action = accept
+milter_protocol = 6
+EOF
+fi
 
 #########
 cat <<EOF > /etc/postfix/pgsql-relay_domains.cf
@@ -86,5 +200,3 @@ if /usr/libexec/postfix/master -c /etc/postfix
    echo "Postfix did not start"
    cat /var/log/mail.log
 fi
-
-

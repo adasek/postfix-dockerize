@@ -27,6 +27,24 @@ docker build --tag=postfix:0.0.1  .
  * MESSAGE_SIZE_LIMIT - in bytes, default value 20480000 for 20MB
  * VIRTUAL_MAILBOX_BASE - mount from host filesystem, actual mail storage
  * VIRTUAL_MAILBOX_LIMIT - Limit on the size of virtual mailbox files. In bytes, default value 512000000 for 480MB
+ * DKIM_KEYS_DIR - directory containing mounted DKIM keys; defaults to `/etc/dkim`
+ * DKIM_DOMAINS - optional comma-separated list of domains expected to have a key; defaults to `MYDOMAIN`
+
+### DKIM signing
+OpenDKIM signs outbound mail when a matching private key is mounted. Generate keys on the host, for example:
+
+```bash
+sudo install -d -m 0750 /etc/dkim/example.org
+sudo opendkim-genkey -b 2048 -d example.org -s mail -D /etc/dkim/example.org
+```
+
+This creates `/etc/dkim/example.org/mail.private` and `mail.txt`. Publish the TXT record in `mail.txt` at `mail._domainkey.example.org`. The container mounts `/etc/dkim` read-only and discovers files using this layout:
+
+```text
+/etc/dkim/<domain>/<selector>.private
+```
+
+Host-generated private keys may remain root-owned and mode `0600`. At startup, the container copies readable mounted keys to its temporary `/run` directory with restricted permissions; the host-mounted `/etc/dkim` remains read-only and is the persistent source of truth. Keep one active `.private` selector per domain. Add additional expected domains to `DKIM_DOMAINS` as a comma-separated list. At startup, logs report each key found and each expected domain without a key. Missing keys do not prevent Postfix from starting or accepting mail; those domains' outbound messages are sent unsigned. If OpenDKIM is unavailable, Postfix accepts mail without signing.
 
 ### Architecture
 Integration via docker-compose with
