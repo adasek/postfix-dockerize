@@ -16,18 +16,22 @@ class TestSMTP:
         assert code == 220, f"STARTTLS failed with code {code}"
         server.quit()
 
-    def test_smtp_authentication_requires_tls(self):
-        """Test that the SMTP server refuses AUTH before STARTTLS"""
+    def test_smtp_authentication_disabled_on_port_25(self):
+        """Test that the SMTP server refuses AUTH on port 25, with or without TLS"""
         with smtplib.SMTP('localhost', 25, timeout=10) as server:
             server.ehlo()
             code, _ = server.docmd('AUTH', 'PLAIN')
-            assert code >= 500, f"AUTH without TLS was not refused (code {code})"
+            assert code >= 500, f"AUTH on port 25 without TLS was not refused (code {code})"
 
-    def test_smtp_authentication(self, smtp_connection, setup_test_domain_and_user, test_user):
-        """Test SMTP authentication with valid credentials"""
-        smtp_connection.starttls()
-        smtp_connection.login(test_user['email'], test_user['password'])
-        # If we get here without exception, auth succeeded
+            server.starttls(context=ssl._create_unverified_context())
+            code, _ = server.docmd('AUTH', 'PLAIN')
+            assert code >= 500, f"AUTH on port 25 with TLS was not refused (code {code})"
+
+    def test_smtp_authentication_on_port_587(self, setup_test_domain_and_user, test_user):
+        """Test valid SMTP authentication over TLS on submission port 587"""
+        with smtplib.SMTP('localhost', 587, timeout=10) as server:
+            server.starttls()
+            server.login(test_user['email'], test_user['password'])
 
     def test_smtp_authentication_failure(self, smtp_connection, test_user):
         """Test SMTP authentication with invalid credentials"""
