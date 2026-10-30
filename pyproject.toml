@@ -11,7 +11,7 @@ python = "^3.12"
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.2"
 pytest-timeout = "^2.4.0"
-imapclient = "^3.0.1"
+imapclient = "^3.1.0"
 faker = "^39.0.0"
 docker = "^7.1.0"
 psycopg2-binary = "^2.9.11"
