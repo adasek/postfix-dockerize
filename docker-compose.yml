@@ -18,6 +18,7 @@ services:
     # If you want to keep track of the container versions
     # use image: "postfix:0.0.1" instead of build: .
     build: .
+    pull_policy: never
     container_name: postfix-dockerize-postfix
     restart: always
     networks:
