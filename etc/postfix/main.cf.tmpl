@@ -22,6 +22,11 @@
 #
 compatibility_level = 3.11
 
+# The container has no IPv6 route by default; without this every outbound
+# delivery first fails with "Network unreachable" on the AAAA record before
+# falling back to IPv4. Switch to "all" once IPv6 is enabled on the network.
+inet_protocols = ipv4
+
 # Whether or not to use the local biff service. This service sends "new mail"
 # notifications to users who have requested new mail notification with the
 # UNIX command "biff y". 
