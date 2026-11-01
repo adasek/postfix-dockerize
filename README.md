@@ -10,6 +10,11 @@ Postgres and dovecot in the single container
 docker build --tag=postfix:0.0.1  .
 ```
 
+## docker compose
+Copy `.env.example` to `.env` and set `MYDOMAIN` and `MYHOSTNAME` there (optionally `MYORIGIN` and `CERT_NAME`).
+`MYHOSTNAME` is also used for the postfix network alias and for roundcube's SMTP server, so it must match
+the TLS certificate name.
+
 ## Env variables
  * MYDOMAIN - The internet domain name of this mail system. 
  * MYORIGIN -The domain name that locally-posted mail appears to come from

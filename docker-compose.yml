@@ -20,15 +20,21 @@ services:
     build: .
     container_name: postfix-dockerize-postfix
     restart: always
+    networks:
+      default:
+        # Lets roundcube reach postfix by the name in its TLS certificate,
+        # so STARTTLS certificate verification succeeds.
+        aliases:
+          - ${MYHOSTNAME:-mailserver.example.org}
     depends_on:
       postgresql:
         condition: service_healthy
       postfixadmin:
         condition: service_started
     environment:
-      - MYDOMAIN=example.org
-      - MYORIGIN=example.org
-      - MYHOSTNAME=mailserver.example.org
+      - MYDOMAIN=${MYDOMAIN:-example.org}
+      - MYORIGIN=${MYORIGIN:-${MYDOMAIN:-example.org}}
+      - MYHOSTNAME=${MYHOSTNAME:-mailserver.example.org}
       - PGHOST=postgresql
       - PGPORT=5432
       - PGUSER=mail
@@ -60,11 +66,11 @@ services:
         target: /tmp/dh4096.pem
         read_only: true
       - type: bind
-        source: /etc/letsencrypt/live/example.org/privkey.pem
+        source: /etc/letsencrypt/live/${CERT_NAME:-${MYDOMAIN:-example.org}}/privkey.pem
         target: /tmp/key.pem
         read_only: true
       - type: bind
-        source: /etc/letsencrypt/live/example.org/fullchain.pem
+        source: /etc/letsencrypt/live/${CERT_NAME:-${MYDOMAIN:-example.org}}/fullchain.pem
         target: /tmp/cert.pem
         read_only: true
     ports:
@@ -115,7 +121,7 @@ services:
       - ROUNDCUBEMAIL_DB_PREFIX=rc_
       - ROUNDCUBEMAIL_DEFAULT_HOST=postfix
       - ROUNDCUBEMAIL_DEFAULT_PORT=143
-      - ROUNDCUBEMAIL_SMTP_SERVER=postfix
+      - ROUNDCUBEMAIL_SMTP_SERVER=tls://${MYHOSTNAME:-mailserver.example.org}
       - ROUNDCUBEMAIL_SMTP_PORT=587
       - ROUNDCUBEMAIL_SKIN=elastic
     ports:
