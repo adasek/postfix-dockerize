@@ -23,8 +23,6 @@ services:
     environment:
       SMTPD_TLS_CERT_FILE: /etc/ssl/certs/cert.pem
       SMTPD_TLS_KEY_FILE: /etc/ssl/certs/key.pem
-      SMTPD_TLS_DH1024_PARAM_FILE: /etc/ssl/certs/dh2048.pem
-      SMTPD_TLS_DH512_PARAM_FILE: /etc/ssl/certs/dh512.pem
       DOVECOT_DH_FILE: /etc/ssl/certs/dh4096.pem
     volumes:
       - ./test-certs:/etc/ssl/certs

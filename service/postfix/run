@@ -126,8 +126,7 @@ fi
 
 #########
 cat <<EOF > /etc/postfix/pgsql-relay_domains.cf
-hosts = $PGHOST
-port = ${PGPORT:-5432}
+hosts = inet:$PGHOST:${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -136,8 +135,7 @@ query = SELECT domain FROM domain WHERE domain='%s' and backupmx = true
 EOF
 
 cat <<EOF > /etc/postfix/pgsql-virtual_alias_maps.cf
-hosts = $PGHOST
-port = ${PGPORT:-5432}
+hosts = inet:$PGHOST:${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -147,8 +145,7 @@ query = SELECT goto FROM alias WHERE address='%s' AND active = true
 EOF
 
 cat <<EOF > /etc/postfix/pgsql-virtual_domains_maps.cf
-hosts = $PGHOST
-port = ${PGPORT:-5432}
+hosts = inet:$PGHOST:${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -157,8 +154,7 @@ query = SELECT domain FROM domain WHERE domain='%s' and backupmx = false and act
 EOF
 
 cat <<EOF > /etc/postfix/pgsql-virtual_mailbox_maps.cf
-hosts = $PGHOST
-port = ${PGPORT:-5432}
+hosts = inet:$PGHOST:${PGPORT:-5432}
 user = $PGUSER
 password = $PGPASS
 dbname = $PGDATABASE
@@ -172,12 +168,6 @@ cat <<EOF >> /etc/postfix/main.cf
 smtpd_tls_chain_files = $SMTPD_TLS_KEY_FILE, $SMTPD_TLS_CERT_FILE
 # smtpd_tls_cert_file = $SMTPD_TLS_CERT_FILE
 # smtpd_tls_key_file = $SMTPD_TLS_KEY_FILE
-EOF
-
-
-cat <<EOF >> /etc/postfix/main.cf
-smtpd_tls_dh1024_param_file = $SMTPD_TLS_DH1024_PARAM_FILE
-smtpd_tls_dh512_param_file = $SMTPD_TLS_DH512_PARAM_FILE
 EOF
 
 

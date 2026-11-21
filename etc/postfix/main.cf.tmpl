@@ -141,7 +141,6 @@ smtpd_tls_security_level = may
 smtpd_tls_auth_only = yes
 smtpd_tls_loglevel = 1
 smtpd_tls_received_header = no
-smtpd_use_tls = yes
 smtpd_tls_session_cache_timeout = 3600s
 smtpd_tls_session_cache_database = lmdb:${data_directory}/smtpd_scache
 tls_random_source = dev:/dev/urandom
@@ -150,13 +149,9 @@ tls_random_source = dev:/dev/urandom
 smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 smtp_tls_security_level = may
 
-# Better forward secrecy settings. With prime-field EDH, OpenSSL wants the
-# server to provide two explicitly-selected (prime, generator) combinations.
-# One for the now long-obsolete "export" cipher suites, and another for
-# non-export cipher suites. Postfix has two such default combinations
-# compiled in, but also supports explicitly-configured overrides.  
-# See: http://www.postfix.org/FORWARD_SECRECY_README.html
-# Includes dhparams files: dynamically
+# Forward secrecy: Postfix >= 3.7 uses the RFC 7919 ffdhe2048 group and ECDHE
+# by default, so no dhparam files are configured.
+# See: https://www.postfix.org/FORWARD_SECRECY_README.html
 
 
 ###############################################################################
