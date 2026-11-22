@@ -21,19 +21,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  unbound:
-    # Local caching resolver for postfix: repeat lookups of dead reverse zones
-    # fail fast instead of timing out on every connection (unbound/unbound.conf).
-    container_name: postfix-dockerize-unbound
-    build: unbound
-    image: ${UNBOUND_IMAGE:-postfix-unbound:local}
-    pull_policy: never
-    restart: always
-    logging: *logging
-    networks:
-      default:
-        ipv4_address: ${DNS_IP:-172.20.0.53}
-
   postfix:
     # `docker compose up` uses ${POSTFIX_IMAGE} if it exists and builds it from
     # this directory otherwise; `./build.sh <tag>` builds a tagged release.
@@ -41,10 +28,6 @@ services:
     image: ${POSTFIX_IMAGE:-postfix:local}
     pull_policy: never
     logging: *logging
-    # Docker's embedded DNS still resolves service names (postgresql) and
-    # forwards everything else to unbound.
-    dns:
-      - ${DNS_IP:-172.20.0.53}
     container_name: postfix-dockerize-postfix
     restart: always
     networks:
@@ -58,8 +41,6 @@ services:
         condition: service_healthy
       postfixadmin:
         condition: service_started
-      unbound:
-        condition: service_healthy
     environment:
       - MYDOMAIN=${MYDOMAIN:-example.org}
       - MYORIGIN=${MYORIGIN:-${MYDOMAIN:-example.org}}
@@ -150,11 +131,3 @@ services:
       - ROUNDCUBEMAIL_SKIN=elastic
     ports:
       - "8182:80"
-
-networks:
-  default:
-    # Fixed subnet so unbound can have a fixed address (DNS_IP) for `dns:`.
-    # Changing it requires `docker compose down` (the network is recreated).
-    ipam:
-      config:
-        - subnet: ${MAIL_SUBNET:-172.20.0.0/16}
