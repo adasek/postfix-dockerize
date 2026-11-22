@@ -20,6 +20,8 @@ services:
       file: ../docker-compose.yml
       service: postfix
     container_name: postfix_test_mail
+    # Tests always run the working tree's Dockerfile.
+    build: ..
     environment:
       SMTPD_TLS_CERT_FILE: /etc/ssl/certs/cert.pem
       SMTPD_TLS_KEY_FILE: /etc/ssl/certs/key.pem

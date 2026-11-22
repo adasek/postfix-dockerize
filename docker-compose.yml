@@ -22,9 +22,9 @@ services:
       timeout: 5s
       retries: 5
   postfix:
-    # `docker compose up` uses ${POSTFIX_IMAGE} if it exists and builds it from
-    # this directory otherwise; `./build.sh <tag>` builds a tagged release.
-    build: .
+    # Never built here: build a tagged release with `./build.sh <tag>` and set
+    # POSTFIX_IMAGE in .env. (With `build:` present, compose rebuilt the image
+    # even when ${POSTFIX_IMAGE} already existed.) tests/ adds `build:` back.
     image: ${POSTFIX_IMAGE:-postfix:local}
     pull_policy: never
     logging: *logging
