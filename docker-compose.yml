@@ -1,24 +1,50 @@
+# Logs go to the host journal, so they survive `docker compose up` recreating
+# a container (the json-file log is deleted with the container).
+# Read them with `docker compose logs` or `journalctl CONTAINER_NAME=...`.
+x-logging: &logging
+  driver: journald
+
 services:
   postgresql:
+    logging: *logging
     container_name: postfix-dockerize-postgresql
     image: postgres:18
     restart: always
     environment:
      - POSTGRES_DB=mail
      - POSTGRES_USER=mail
-     - POSTGRES_PASSWORD=somePassword
+     - POSTGRES_PASSWORD=${DB_PASSWORD:-somePassword}
     volumes:
-      - /root/mail/postgresql18-data:/var/lib/postgresql
+      - ${DATA_DIR:-/root/mail}/postgresql18-data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mail"]
       interval: 10s
       timeout: 5s
       retries: 5
-  postfix:
-    # If you want to keep track of the container versions
-    # use image: "postfix:0.0.1" instead of build: .
-    build: .
+  unbound:
+    # Local caching resolver for postfix: repeat lookups of dead reverse zones
+    # fail fast instead of timing out on every connection (unbound/unbound.conf).
+    container_name: postfix-dockerize-unbound
+    build: unbound
+    image: ${UNBOUND_IMAGE:-postfix-unbound:local}
     pull_policy: never
+    restart: always
+    logging: *logging
+    networks:
+      default:
+        ipv4_address: ${DNS_IP:-172.20.0.53}
+
+  postfix:
+    # `docker compose up` uses ${POSTFIX_IMAGE} if it exists and builds it from
+    # this directory otherwise; `./build.sh <tag>` builds a tagged release.
+    build: .
+    image: ${POSTFIX_IMAGE:-postfix:local}
+    pull_policy: never
+    logging: *logging
+    # Docker's embedded DNS still resolves service names (postgresql) and
+    # forwards everything else to unbound.
+    dns:
+      - ${DNS_IP:-172.20.0.53}
     container_name: postfix-dockerize-postfix
     restart: always
     networks:
@@ -32,6 +58,8 @@ services:
         condition: service_healthy
       postfixadmin:
         condition: service_started
+      unbound:
+        condition: service_healthy
     environment:
       - MYDOMAIN=${MYDOMAIN:-example.org}
       - MYORIGIN=${MYORIGIN:-${MYDOMAIN:-example.org}}
@@ -39,7 +67,7 @@ services:
       - PGHOST=postgresql
       - PGPORT=5432
       - PGUSER=mail
-      - PGPASS=somePassword
+      - PGPASS=${DB_PASSWORD:-somePassword}
       - PGDATABASE=mail
       - SMTPD_TLS_CERT_FILE=/tmp/cert.pem
       - SMTPD_TLS_KEY_FILE=/tmp/key.pem
@@ -47,7 +75,7 @@ services:
       - MESSAGE_SIZE_LIMIT=20480000
       - VIRTUAL_MAILBOX_BASE=/var/mailstorage
     volumes:
-      - /root/mail/mailstorage:/var/mailstorage
+      - ${DATA_DIR:-/root/mail}/mailstorage:/var/mailstorage
       - type: bind
         source: /etc/dkim
         target: /etc/dkim
@@ -84,6 +112,7 @@ services:
     container_name: postfix-dockerize-postfixadmin
     image: "postfixadmin:latest"
     restart: always
+    logging: *logging
     depends_on:
       postgresql:
         condition: service_healthy
@@ -91,7 +120,7 @@ services:
       - POSTFIXADMIN_DB_TYPE=pgsql
       - POSTFIXADMIN_DB_HOST=postgresql
       - POSTFIXADMIN_DB_USER=mail
-      - POSTFIXADMIN_DB_PASSWORD=somePassword
+      - POSTFIXADMIN_DB_PASSWORD=${DB_PASSWORD:-somePassword}
       - POSTFIXADMIN_DB_NAME=mail
       - POSTFIXADMIN_ENCRYPT=php_crypt:BLOWFISH:10:{BLF-CRYPT}
     ports:
@@ -101,6 +130,7 @@ services:
     container_name: postfix-dockerize-roundcube
     image: roundcube/roundcubemail:latest
     restart: always
+    logging: *logging
     depends_on:
       postfix:
         condition: service_healthy
@@ -110,7 +140,7 @@ services:
       - ROUNDCUBEMAIL_DB_TYPE=pgsql
       - ROUNDCUBEMAIL_DB_HOST=postgresql
       - ROUNDCUBEMAIL_DB_USER=mail
-      - ROUNDCUBEMAIL_DB_PASSWORD=somePassword
+      - ROUNDCUBEMAIL_DB_PASSWORD=${DB_PASSWORD:-somePassword}
       - ROUNDCUBEMAIL_DB_NAME=mail
       - ROUNDCUBEMAIL_DB_PREFIX=rc_
       - ROUNDCUBEMAIL_DEFAULT_HOST=postfix
@@ -120,3 +150,11 @@ services:
       - ROUNDCUBEMAIL_SKIN=elastic
     ports:
       - "8182:80"
+
+networks:
+  default:
+    # Fixed subnet so unbound can have a fixed address (DNS_IP) for `dns:`.
+    # Changing it requires `docker compose down` (the network is recreated).
+    ipam:
+      config:
+        - subnet: ${MAIL_SUBNET:-172.20.0.0/16}

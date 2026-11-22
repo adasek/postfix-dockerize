@@ -15,6 +15,12 @@ services:
     environment:
       POSTFIXADMIN_SETUP_PASSWORD: test_setup_password
 
+  unbound:
+    container_name: postfix_test_unbound
+    extends:
+      file: ../docker-compose.yml
+      service: unbound
+
   postfix:
     extends:
       file: ../docker-compose.yml
@@ -30,3 +36,9 @@ services:
 
 volumes:
   maildata:
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${MAIL_SUBNET:-172.20.0.0/16}
