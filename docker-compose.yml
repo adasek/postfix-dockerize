@@ -15,7 +15,8 @@ services:
      - POSTGRES_USER=mail
      - POSTGRES_PASSWORD=${DB_PASSWORD:-somePassword}
     volumes:
-      - ${DATA_DIR:-/root/mail}/postgresql18-data:/var/lib/postgresql
+      # Required: a missing value must not silently start an empty database.
+      - ${DATA_DIR_DB:?set DATA_DIR_DB in .env}:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mail"]
       interval: 10s
@@ -56,7 +57,7 @@ services:
       - MESSAGE_SIZE_LIMIT=20480000
       - VIRTUAL_MAILBOX_BASE=/var/mailstorage
     volumes:
-      - ${DATA_DIR:-/root/mail}/mailstorage:/var/mailstorage
+      - ${DATA_DIR_MAIL:?set DATA_DIR_MAIL in .env}:/var/mailstorage
       - type: bind
         source: /etc/dkim
         target: /etc/dkim

@@ -11,7 +11,7 @@ docker build --tag=postfix:0.0.1  .
 ```
 
 ## docker compose
-Copy `.env.example` to `.env` and set `MYDOMAIN` and `MYHOSTNAME` there (optionally `MYORIGIN` and `CERT_NAME`).
+Copy `.env.example` to `.env` and set `MYDOMAIN`, `MYHOSTNAME`, `DB_PASSWORD`, `DATA_DIR_DB` and `DATA_DIR_MAIL` there (optionally `MYORIGIN` and `CERT_NAME`).
 `MYHOSTNAME` is also used for the postfix network alias and for roundcube's SMTP server, so it must match
 the TLS certificate name.
 
